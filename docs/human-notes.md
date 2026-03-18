@@ -1,3 +1,4 @@
+<!-- AGENTS SHOULD IGNORE THIS FILE -->
 ## Overview
 
 - Take in a photo
@@ -15,7 +16,7 @@
 
 
 
-### About TTB Label Requirements
+### Copied text About TTB Label Requirements
 For reference, TTB requires specific information on alcohol beverage labels. The exact requirements vary by beverage type (beer, wine, distilled spirits) but common elements include:
 - Brand name
 - Class/type designation

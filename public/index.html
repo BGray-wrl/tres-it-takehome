@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TTB Label Verification</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header p {
+      margin-top: 0.4rem;
+      color: #555;
+      font-size: 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 1.75rem;
+      max-width: 680px;
+      margin: 0 auto 1.5rem;
+    }
+
+    /* Drop zone */
+    #drop-zone {
+      border: 2.5px dashed #aab;
+      border-radius: 10px;
+      padding: 2.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    #drop-zone.drag-over {
+      border-color: #2563eb;
+      background: #eff6ff;
+    }
+
+    #drop-zone svg {
+      width: 48px;
+      height: 48px;
+      color: #94a3b8;
+      margin-bottom: 0.75rem;
+    }
+
+    #drop-zone p {
+      font-size: 1.05rem;
+      color: #555;
+    }
+
+    #drop-zone span {
+      color: #2563eb;
+      font-weight: 600;
+    }
+
+    #file-input { display: none; }
+
+    #file-list {
+      margin-top: 1rem;
+      font-size: 0.9rem;
+      color: #444;
+    }
+
+    #file-list li {
+      list-style: none;
+      padding: 0.25rem 0;
+    }
+
+    /* Form fields */
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
+    .form-group {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 0.35rem;
+      color: #333;
+    }
+
+    input[type="text"] {
+      padding: 0.6rem 0.85rem;
+      border: 1.5px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #2563eb;
+    }
+
+    /* Verify button */
+    #verify-btn {
+      display: block;
+      width: 100%;
+      margin-top: 1.5rem;
+      padding: 0.85rem;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    #verify-btn:hover:not(:disabled) { background: #1d4ed8; }
+    #verify-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* Results */
+    #results-section { display: none; max-width: 680px; margin: 0 auto; }
+
+    #results-section h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .result-card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .result-card .filename {
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      word-break: break-all;
+      color: #1a1a2e;
+    }
+
+    .result-card table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+    }
+
+    .result-card th {
+      text-align: left;
+      font-weight: 600;
+      color: #555;
+      padding: 0.35rem 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .result-card td {
+      padding: 0.45rem 0.5rem;
+      border-bottom: 1px solid #f3f4f6;
+      vertical-align: top;
+    }
+
+    .result-card tr:last-child td { border-bottom: none; }
+
+    .badge {
+      display: inline-block;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .notes { color: #666; font-size: 0.85rem; }
+
+    /* Spinner */
+    .spinner-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: #555;
+      font-size: 0.95rem;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #d1d5db;
+      border-top-color: #2563eb;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-msg { color: #dc2626; font-size: 0.9rem; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>TTB Label Verification</h1>
+  <p>Upload alcohol label photos to verify brand name, ABV, and government warning statement.</p>
+</header>
+
+<!-- Input card -->
+<div class="card">
+  <div id="drop-zone" role="button" tabindex="0" aria-label="Upload label images">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/>
+    </svg>
+    <p>Drag &amp; drop label images here, or <span>click to browse</span></p>
+    <p style="font-size:0.82rem; margin-top:0.4rem; color:#888;">Accepts JPG, PNG, WEBP — multiple files OK</p>
+  </div>
+  <input type="file" id="file-input" multiple accept="image/*" />
+  <ul id="file-list"></ul>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label for="brand-input">Expected Brand Name</label>
+      <input type="text" id="brand-input" placeholder='e.g. "Stone\'s Throw"' />
+    </div>
+    <div class="form-group">
+      <label for="abv-input">Expected ABV</label>
+      <input type="text" id="abv-input" placeholder='e.g. "40" or "40%"' />
+    </div>
+  </div>
+
+  <button id="verify-btn" disabled>Verify Labels</button>
+  <p id="form-error" class="error-msg" style="display:none;"></p>
+</div>
+
+<!-- Results -->
+<section id="results-section">
+  <h2>Results</h2>
+  <div id="results-container"></div>
+</section>
+
+<script>
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  const fileList = document.getElementById('file-list');
+  const verifyBtn = document.getElementById('verify-btn');
+  const brandInput = document.getElementById('brand-input');
+  const abvInput = document.getElementById('abv-input');
+  const resultsSection = document.getElementById('results-section');
+  const resultsContainer = document.getElementById('results-container');
+  const formError = document.getElementById('form-error');
+
+  let selectedFiles = [];
+
+  // Drop zone interactions
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') fileInput.click(); });
+
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    handleFiles([...e.dataTransfer.files]);
+  });
+
+  fileInput.addEventListener('change', () => handleFiles([...fileInput.files]));
+
+  function handleFiles(files) {
+    const images = files.filter(f => f.type.startsWith('image/'));
+    if (!images.length) return;
+    selectedFiles = images;
+    renderFileList();
+    updateBtn();
+  }
+
+  function renderFileList() {
+    fileList.innerHTML = selectedFiles.map(f =>
+      `<li>📎 ${f.name} <span style="color:#888;">(${(f.size/1024).toFixed(1)} KB)</span></li>`
+    ).join('');
+  }
+
+  function updateBtn() {
+    verifyBtn.disabled = selectedFiles.length === 0;
+  }
+
+  verifyBtn.addEventListener('click', startVerification);
+
+  async function startVerification() {
+    formError.style.display = 'none';
+    const brand = brandInput.value.trim();
+    const abv = abvInput.value.trim();
+
+    if (!brand || !abv) {
+      formError.textContent = 'Please enter both Brand Name and ABV before verifying.';
+      formError.style.display = 'block';
+      return;
+    }
+
+    verifyBtn.disabled = true;
+    resultsSection.style.display = 'block';
+    resultsContainer.innerHTML = '';
+
+    // Create a result card placeholder for each file
+    const cards = selectedFiles.map(file => {
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      card.innerHTML = `
+        <div class="filename">${escHtml(file.name)}</div>
+        <div class="spinner-wrap">
+          <div class="spinner"></div>
+          <span>Analyzing…</span>
+        </div>
+      `;
+      resultsContainer.appendChild(card);
+      return card;
+    });
+
+    // Run all verifications in parallel
+    await Promise.all(selectedFiles.map((file, i) =>
+      verifyLabel(file, brand, abv, cards[i])
+    ));
+
+    verifyBtn.disabled = false;
+  }
+
+  async function verifyLabel(file, brand, abv, card) {
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      formData.append('brand', brand);
+      formData.append('abv', abv);
+
+      const res = await fetch('/api/verify', { method: 'POST', body: formData });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Server error ${res.status}: ${text}`);
+      }
+
+      const data = await res.json();
+      renderResult(card, file.name, data);
+    } catch (err) {
+      card.innerHTML = `
+        <div class="filename">${escHtml(file.name)}</div>
+        <p class="error-msg">Error: ${escHtml(err.message)}</p>
+      `;
+    }
+  }
+
+  function renderResult(card, filename, data) {
+    const rows = [
+      {
+        label: 'Brand Name',
+        pass: data.brand?.pass,
+        detail: data.brand?.found ? `Found: <em>${escHtml(data.brand.found)}</em>` : '',
+        notes: data.brand?.notes
+      },
+      {
+        label: 'ABV',
+        pass: data.abv?.pass,
+        detail: data.abv?.found ? `Found: <em>${escHtml(data.abv.found)}</em>` : '',
+        notes: ''
+      },
+      {
+        label: 'Gov. Warning',
+        pass: data.warning?.pass,
+        detail: '',
+        notes: data.warning?.notes
+      }
+    ];
+
+    const tableRows = rows.map(r => {
+      const badge = r.pass === true ? '✅' : r.pass === false ? '❌' : '❓';
+      const detail = [r.detail, r.notes ? `<span class="notes">${escHtml(r.notes)}</span>` : '']
+        .filter(Boolean).join(' ');
+      return `<tr>
+        <td><strong>${r.label}</strong></td>
+        <td class="badge">${badge}</td>
+        <td>${detail}</td>
+      </tr>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="filename">${escHtml(filename)}</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Check</th>
+            <th>Result</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    `;
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+</script>
+</body>
+</html>
