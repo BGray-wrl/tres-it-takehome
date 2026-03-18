@@ -75,3 +75,37 @@ docs/
 | Variable | Where |
 |---|---|
 | `OPENROUTER_API_KEY` | Cloudflare Pages dashboard (production) or `.dev.vars` (local) |
+
+---
+
+## Approach, Tools Used & Assumptions
+
+### Approach
+
+The core insight from stakeholder interviews is that most TTB label review is pure **matching** — does the label say what the application says? This lends itself well to a multimodal LLM that can read an image and answer structured questions about it.
+
+The app is intentionally minimal: a single HTML file for the UI, a single serverless function for the backend. No framework, no build step, no database. Labels are never stored — each request is stateless.
+
+Checks implemented:
+- **Brand name**: Case-insensitive match with tolerance for capitalization variants (e.g. "Stone's Throw" ↔ "STONE'S THROW"), per Dave Morrison's feedback on false positives from strict matching.
+- **ABV**: Exact numeric match. Accepts input with or without the `%` suffix.
+- **Government warning**: Checks word-for-word accuracy of the full mandated statement, plus that `"GOVERNMENT WARNING:"` appears in all caps and is visually bold/prominent — per Jenny Park's note that agents reject labels using title case or burying the warning in small print.
+
+Multiple labels are processed **in parallel** (Promise.all), addressing Sarah Chen's batch-upload requirement for high-volume importers.
+
+### Tools Used
+
+| Layer | Choice | Reason |
+|---|---|---|
+| Frontend | Vanilla HTML/CSS/JS | Zero dependencies, zero build step; works on any browser without install |
+| Backend | Cloudflare Pages Functions (JS) | Native runtime on Cloudflare — no cold start, no container, free tier |
+| LLM | Google Gemini Flash via OpenRouter | Fastest multimodal model available; sub-5s response time meets Sarah's hard requirement from the failed scanning-vendor pilot |
+| Hosting | Cloudflare Pages | Free, git-integrated, global CDN, supports serverless functions alongside static files |
+
+### Assumptions & Trade-offs
+
+- **No persistence**: Labels and results are not stored anywhere. For a production system, you'd want audit logs and document retention — Marcus flagged federal compliance requirements. Out of scope for a prototype.
+- **Single brand/ABV per batch**: All uploaded images in one session are checked against the same brand name and ABV. A production workflow would likely tie each image to its own application record from COLA.
+- **Network access**: OpenRouter must be reachable from Cloudflare's network. If deployed inside TTB's internal Azure environment, the firewall restrictions Marcus mentioned would need to be addressed (likely via an approved proxy or using Azure-hosted models).
+- **Image quality**: The LLM handles moderate rotation, glare, and lighting variation reasonably well (as Jenny hoped). Severely degraded images will return null/fail with a note — agents should re-photograph and resubmit.
+- **No auth**: The prototype has no login. A production system would require SSO and role-based access.

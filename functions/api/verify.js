@@ -12,8 +12,12 @@ Examine this label image and verify three things:
 2. ABV: Does the label show "${abv}%" alcohol by volume?
    Return the exact percentage you see.
 
-3. GOVERNMENT WARNING: Is the following EXACT text present, in ALL CAPS?
-   "GOVERNMENT WARNING: (1) ACCORDING TO THE SURGEON GENERAL, WOMEN SHOULD NOT DRINK ALCOHOLIC BEVERAGES DURING PREGNANCY BECAUSE OF THE RISK OF BIRTH DEFECTS. (2) CONSUMPTION OF ALCOHOLIC BEVERAGES IMPAIRS YOUR ABILITY TO DRIVE A CAR OR OPERATE MACHINERY, AND MAY CAUSE HEALTH PROBLEMS."
+3. GOVERNMENT WARNING: Is the following EXACT text present?
+   Requirements (ALL must be met):
+   a) The text "GOVERNMENT WARNING:" must appear in ALL CAPS and visually bold/prominent.
+   b) The full warning text must read, word-for-word:
+      "GOVERNMENT WARNING: (1) ACCORDING TO THE SURGEON GENERAL, WOMEN SHOULD NOT DRINK ALCOHOLIC BEVERAGES DURING PREGNANCY BECAUSE OF THE RISK OF BIRTH DEFECTS. (2) CONSUMPTION OF ALCOHOLIC BEVERAGES IMPAIRS YOUR ABILITY TO DRIVE A CAR OR OPERATE MACHINERY, AND MAY CAUSE HEALTH PROBLEMS."
+   Fail if: wording differs, "GOVERNMENT WARNING:" is not all caps, it is in title case, it is not visually distinct/bold, or it is buried in illegibly small text.
 
 Respond ONLY with valid JSON:
 {
