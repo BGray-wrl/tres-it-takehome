@@ -1,0 +1,122 @@
+{
+  "description": "Test dataset for TTB Label Verification App. All labels verify against brand='OLD TOM DISTILLERY', abv='45' unless noted in verify_with.",
+  "cases": [
+    {
+      "file": "tests/labels/pass_all.png",
+      "description": "All three checks should pass. Correct brand, correct ABV, correct warning in all-caps.",
+      "verify_with": {
+        "brand": "OLD TOM DISTILLERY",
+        "abv": "45"
+      },
+      "expected": {
+        "brand": true,
+        "abv": true,
+        "warning": true
+      }
+    },
+    {
+      "file": "tests/labels/fail_brand.png",
+      "description": "Brand should FAIL \u2014 label shows 'MOUNTAIN RIDGE SPIRITS', not 'OLD TOM DISTILLERY'.",
+      "verify_with": {
+        "brand": "MOUNTAIN RIDGE SPIRITS",
+        "abv": "45"
+      },
+      "expected": {
+        "brand": false,
+        "abv": true,
+        "warning": true
+      }
+    },
+    {
+      "file": "tests/labels/fail_abv.png",
+      "description": "ABV should FAIL \u2014 label shows 38%, expected 45%.",
+      "verify_with": {
+        "brand": "OLD TOM DISTILLERY",
+        "abv": "45"
+      },
+      "expected": {
+        "brand": true,
+        "abv": false,
+        "warning": true
+      }
+    },
+    {
+      "file": "tests/labels/fail_warning_missing.png",
+      "description": "Warning should FAIL \u2014 no government warning statement on the label.",
+      "verify_with": {
+        "brand": "OLD TOM DISTILLERY",
+        "abv": "45"
+      },
+      "expected": {
+        "brand": true,
+        "abv": true,
+        "warning": false
+      }
+    },
+    {
+      "file": "tests/labels/fail_warning_titlecase.png",
+      "description": "Warning should FAIL \u2014 'Government Warning:' is title case, not all caps.",
+      "verify_with": {
+        "brand": "OLD TOM DISTILLERY",
+        "abv": "45"
+      },
+      "expected": {
+        "brand": true,
+        "abv": true,
+        "warning": false
+      }
+    },
+    {
+      "file": "tests/labels/fail_warning_truncated.png",
+      "description": "Warning should FAIL \u2014 only clause (1) present; clause (2) about driving is missing.",
+      "verify_with": {
+        "brand": "OLD TOM DISTILLERY",
+        "abv": "45"
+      },
+      "expected": {
+        "brand": true,
+        "abv": true,
+        "warning": false
+      }
+    },
+    {
+      "file": "tests/labels/fail_warning_wrong_text.png",
+      "description": "Warning should FAIL \u2014 paraphrased health notice instead of mandated exact text.",
+      "verify_with": {
+        "brand": "OLD TOM DISTILLERY",
+        "abv": "45"
+      },
+      "expected": {
+        "brand": true,
+        "abv": true,
+        "warning": false
+      }
+    },
+    {
+      "file": "tests/labels/fail_all.png",
+      "description": "All three checks should FAIL \u2014 wrong brand, wrong ABV, no warning.",
+      "verify_with": {
+        "brand": "BLUE RIDGE MOUNTAIN WINERY",
+        "abv": "45"
+      },
+      "expected": {
+        "brand": false,
+        "abv": false,
+        "warning": false
+      }
+    },
+    {
+      "file": "tests/labels/pass_brand_caps_variant.png",
+      "description": "Brand should PASS despite mixed-case 'Old Tom Distillery' on label (case-insensitive match).",
+      "verify_with": {
+        "brand": "Old Tom Distillery",
+        "abv": "45"
+      },
+      "expected": {
+        "brand": true,
+        "abv": true,
+        "warning": true
+      }
+    }
+  ]
+}
