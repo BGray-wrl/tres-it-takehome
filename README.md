@@ -11,7 +11,7 @@ Upload label photos and instantly verify:
 
 ## How It Works
 
-1. Agent uploads one or more label images
+1. User/Agent uploads one or more label images
 2. Enters the expected brand name and ABV
 3. Each label is sent (in parallel) to the backend, which calls **Google Gemini Flash** via OpenRouter
 4. Results render in a table — pass/fail per check with found values from the label
@@ -58,10 +58,15 @@ Then open `http://localhost:8788` in your browser.
 
 ```
 public/
-  index.html          # Full UI (single file, no build needed)
+  index.html              # Full UI (single file, no build needed)
 functions/
   api/
-    verify.js         # Cloudflare Pages Function — proxies to OpenRouter
+    verify.js             # Cloudflare Pages Function — proxies to OpenRouter
+tests/
+  generate_labels.py      # Generates synthetic label PNGs (uv run --with pillow)
+  run_tests.py            # End-to-end test runner against /api/verify (uv run --with httpx)
+  manifest.json           # Test case index with expected pass/fail per check
+  labels/                 # 9 generated PNG label images (2 pass, 7 targeted fail cases)
 docs/
   requirements-and-spec.md
   interview-notes.md
@@ -99,7 +104,7 @@ Multiple labels are processed **in parallel** (Promise.all), addressing Sarah Ch
 |---|---|---|
 | Frontend | Vanilla HTML/CSS/JS | Zero dependencies, zero build step; works on any browser without install |
 | Backend | Cloudflare Pages Functions (JS) | Native runtime on Cloudflare — no cold start, no container, free tier |
-| LLM | Google Gemini Flash via OpenRouter | Fastest multimodal model available; sub-5s response time meets Sarah's hard requirement from the failed scanning-vendor pilot |
+| LLM | Google Gemini Flash via OpenRouter | Best multimodel blend of latency, price, and accuracy; sub-5s response time meets Sarah's hard requirement from the failed scanning-vendor pilot. OpenRouter prevents vender lock-in. |
 | Hosting | Cloudflare Pages | Free, git-integrated, global CDN, supports serverless functions alongside static files |
 
 ### Assumptions & Trade-offs
@@ -107,5 +112,4 @@ Multiple labels are processed **in parallel** (Promise.all), addressing Sarah Ch
 - **No persistence**: Labels and results are not stored anywhere. For a production system, you'd want audit logs and document retention — Marcus flagged federal compliance requirements. Out of scope for a prototype.
 - **Single brand/ABV per batch**: All uploaded images in one session are checked against the same brand name and ABV. A production workflow would likely tie each image to its own application record from COLA.
 - **Network access**: OpenRouter must be reachable from Cloudflare's network. If deployed inside TTB's internal Azure environment, the firewall restrictions Marcus mentioned would need to be addressed (likely via an approved proxy or using Azure-hosted models).
-- **Image quality**: The LLM handles moderate rotation, glare, and lighting variation reasonably well (as Jenny hoped). Severely degraded images will return null/fail with a note — agents should re-photograph and resubmit.
 - **No auth**: The prototype has no login. A production system would require SSO and role-based access.
