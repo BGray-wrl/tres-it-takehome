@@ -6,20 +6,28 @@ const PROMPT_TEMPLATE = (brand, abv) => `You are verifying an alcohol bottle lab
 Examine this label image and verify three things:
 
 1. BRAND NAME: Does the label show the brand "${brand}"?
-   Minor capitalization differences are OK ("Stone's Throw" matches "STONE'S THROW").
-   Return what you actually see on the label.
+   - PASS only if the brand name on the label is the same brand, allowing only for
+     capitalization differences. Example: "Stone's Throw" matches "STONE'S THROW".
+   - FAIL if the label shows a different brand name — different words mean a definite fail.
+     Example: "MOUNTAIN RIDGE SPIRITS" does NOT match "OLD TOM DISTILLERY".
+   Set "found" to the exact brand text visible on the label, or null if none.
 
 2. ABV: Does the label show "${abv}%" alcohol by volume?
-   Return the exact percentage you see.
+   - PASS if the numeric value matches (e.g. label shows "45%" or "45% Alc./Vol." and expected is "45").
+   - FAIL if the numeric value differs.
+   Set "found" to the exact ABV text visible on the label, or null if none.
 
 3. GOVERNMENT WARNING: Is the following EXACT text present?
    Requirements (ALL must be met):
-   a) The text "GOVERNMENT WARNING:" must appear in ALL CAPS and visually bold/prominent.
-   b) The full warning text must read, word-for-word:
+   a) The prefix "GOVERNMENT WARNING:" must be in ALL CAPS. Title case ("Government Warning:")
+      or any other casing is a FAIL.
+   b) The full statement must match word-for-word (both clauses required):
       "GOVERNMENT WARNING: (1) ACCORDING TO THE SURGEON GENERAL, WOMEN SHOULD NOT DRINK ALCOHOLIC BEVERAGES DURING PREGNANCY BECAUSE OF THE RISK OF BIRTH DEFECTS. (2) CONSUMPTION OF ALCOHOLIC BEVERAGES IMPAIRS YOUR ABILITY TO DRIVE A CAR OR OPERATE MACHINERY, AND MAY CAUSE HEALTH PROBLEMS."
-   Fail if: wording differs, "GOVERNMENT WARNING:" is not all caps, it is in title case, it is not visually distinct/bold, or it is buried in illegibly small text.
+   c) The warning must be legible — not printed in illegibly tiny text.
+   PASS if all three are met. FAIL if the text is absent, uses wrong casing, has missing or
+   altered words, is missing either clause, or is unreadably small.
 
-Respond ONLY with valid JSON:
+Respond ONLY with valid JSON — no markdown, no explanation, just the JSON object:
 {
   "brand": { "pass": true, "found": "exact text on label or null", "notes": "" },
   "abv": { "pass": true, "found": "value on label or null" },
