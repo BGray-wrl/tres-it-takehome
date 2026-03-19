@@ -89,7 +89,7 @@ The app is intentionally minimal: a single HTML file for the UI, a single server
 Checks implemented:
 - **Brand name**: Case-insensitive match with tolerance for capitalization variants (e.g. "Stone's Throw" ↔ "STONE'S THROW"), per Dave Morrison's feedback on false positives from strict matching.
 - **ABV**: Exact numeric match. Accepts input with or without the `%` suffix.
-- **Government warning**: Checks word-for-word accuracy of the full mandated statement, plus that `"GOVERNMENT WARNING:"` appears in all caps and is visually bold/prominent — per Jenny Park's note that agents reject labels using title case or burying the warning in small print.
+- **Government warning**: Checks word-for-word accuracy of the full mandated statement, that `"GOVERNMENT WARNING:"` appears in all caps (not title case), and that the text is legibly displayed — per Jenny Park's note that agents reject labels using title case or burying the warning in unreadably small print.
 
 Multiple labels are processed **in parallel** (Promise.all), addressing Sarah Chen's batch-upload requirement for high-volume importers.
 
