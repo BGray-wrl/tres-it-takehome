@@ -6,3 +6,7 @@
 __pycache__/
 *.pyc
 *.pyo
+
+.dev.vars*
+!.dev.vars.example
+!.env.example
